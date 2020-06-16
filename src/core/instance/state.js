@@ -48,8 +48,11 @@ export function proxy (target: Object, sourceKey: string, key: string) {
 export function initState (vm: Component) {
   vm._watchers = []
   const opts = vm.$options
+  // 初始化props MYANA-2
   if (opts.props) initProps(vm, opts.props)
+  // 初始化methods
   if (opts.methods) initMethods(vm, opts.methods)
+  // 初始化data 所以前后顺序已经有了
   if (opts.data) {
     initData(vm)
   } else {
@@ -66,6 +69,7 @@ function initProps (vm: Component, propsOptions: Object) {
   const props = vm._props = {}
   // cache prop keys so that future props updates can iterate using Array
   // instead of dynamic object key enumeration.
+  // 缓存属性键，以便将来的属性更新可以使用数组而不是动态对象键枚举进行迭代。
   const keys = vm.$options._propKeys = []
   const isRoot = !vm.$parent
   // root instance props should be converted
@@ -85,6 +89,7 @@ function initProps (vm: Component, propsOptions: Object) {
           vm
         )
       }
+      // 通过 defineProperty 函数实现双向绑定
       defineReactive(props, key, value, () => {
         if (!isRoot && !isUpdatingChildComponent) {
           warn(
@@ -102,6 +107,7 @@ function initProps (vm: Component, propsOptions: Object) {
     // static props are already proxied on the component's prototype
     // during Vue.extend(). We only need to proxy props defined at
     // instantiation here.
+    // 让 vm.key 代理 vm._props.key
     if (!(key in vm)) {
       proxy(vm, `_props`, key)
     }
@@ -144,10 +150,11 @@ function initData (vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
+      // 可以让 vm._data.x 通过 vm.x 访问
       proxy(vm, `_data`, key)
     }
   }
-  // observe data
+  // observe data 监听
   observe(data, true /* asRootData */)
 }
 

@@ -43,9 +43,12 @@ export class Observer {
     this.value = value
     this.dep = new Dep()
     this.vmCount = 0
+    // 通过 defineProperty 为对象添加 __ob__ 属性，并且配置为不可枚举
+    // 这样做的意义是对象遍历时不会遍历到 __ob__ 属性
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
       if (hasProto) {
+        // 如果是数组 则将value.__proto__ = arrayMethods => 改写能修改源数组的7个方法的原型
         protoAugment(value, arrayMethods)
       } else {
         copyAugment(value, arrayMethods, arrayKeys)
@@ -61,6 +64,7 @@ export class Observer {
    * getter/setters. This method should only be called when
    * value type is Object.
    */
+  // 遍历对象，通过 defineProperty 函数实现双向绑定
   walk (obj: Object) {
     const keys = Object.keys(obj)
     for (let i = 0; i < keys.length; i++) {
@@ -121,6 +125,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
     Object.isExtensible(value) &&
     !value._isVue
   ) {
+    // 创建一个监听者
     ob = new Observer(value)
   }
   if (asRootData && ob) {
@@ -139,8 +144,10 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
+  // 创建依赖实例，通过闭包的方式让
+  // set get 函数使用   MYANA-3
   const dep = new Dep()
-
+  // 获得属性对象
   const property = Object.getOwnPropertyDescriptor(obj, key)
   if (property && property.configurable === false) {
     return
@@ -152,13 +159,18 @@ export function defineReactive (
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
-
+  // 如果 val 是对象的话递归监听
   let childOb = !shallow && observe(val)
+  // 无论是对象还是数组，需要实现双向绑定的话最终都会执行这个函数，该函数可以监听到 set 和 get 的事件。
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
+    // 拦截 getter，当取值时会触发该函数
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
+      // 进行依赖收集
+      // 初始化时会在初始化渲染 Watcher 时访问到需要双向绑定的对象
+      // 从而触发 get 函数
       if (Dep.target) {
         dep.depend()
         if (childOb) {
@@ -170,6 +182,7 @@ export function defineReactive (
       }
       return value
     },
+     // 拦截 setter，当赋值时会触发该函数
     set: function reactiveSetter (newVal) {
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
@@ -187,7 +200,9 @@ export function defineReactive (
       } else {
         val = newVal
       }
+      // 如果新值是对象的话递归监听
       childOb = !shallow && observe(newVal)
+      // 派发更新
       dep.notify()
     }
   })

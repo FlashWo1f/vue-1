@@ -31,9 +31,10 @@ import {
 export const emptyNode = new VNode('', {}, [])
 
 const hooks = ['create', 'activate', 'update', 'remove', 'destroy']
-
+// 判断是否是相同节点
 function sameVnode (a, b) {
   return (
+    // 首要必要条件key
     a.key === b.key && (
       (
         a.tag === b.tag &&
@@ -497,7 +498,7 @@ export function createPatchFunction (backend) {
       if (isDef(c) && sameVnode(node, c)) return i
     }
   }
-
+// diff操作 比较新旧节点
   function patchVnode (
     oldVnode,
     vnode,
