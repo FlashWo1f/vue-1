@@ -86,6 +86,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
 
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
+  // 收集此 tick 的所有 cb
   callbacks.push(() => {
     if (cb) {
       try {

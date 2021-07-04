@@ -37,6 +37,7 @@ export function parsePath (path: string): any {
   }
   const segments = path.split('.')
   return function (obj) {
+    // 这里的 obj 就是 vm
     for (let i = 0; i < segments.length; i++) {
       if (!obj) return
       obj = obj[segments[i]]
